@@ -1,1 +1,49 @@
+name: backend-ci
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write    # OIDC용
+      contents: read
+
+    env:
+      AWS_REGION: ap-northeast-2
+      ECR_REPO: oi-backend
+      IMAGE_TAG: sha-${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::043902793737:role/gha-oidc-ecr-pusher
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build image
+        run: |
+          docker build -t $ECR_REPO:${IMAGE_TAG} -f Dockerfile .
+
+      - name: Tag & Push
+        run: |
+          REPO_URI=${{ steps.ecr-login.outputs.registry }}/${ECR_REPO}
+          docker tag $ECR_REPO:${IMAGE_TAG} $REPO_URI:${IMAGE_TAG}
+          # 최신 안정 태그를 latest로 유지하고 싶으면 아래 라인 추가
+          docker tag $ECR_REPO:${IMAGE_TAG} $REPO_URI:latest
+          docker push $REPO_URI:${IMAGE_TAG}
+          docker push $REPO_URI:latest
+
+      - name: Output image
+        run: echo "Pushed ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPO }}:${IMAGE_TAG}"
 
