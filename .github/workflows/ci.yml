@@ -24,7 +24,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ap-northeast-2
           role-to-assume: arn:aws:iam::043902793737:role/gha-oidc-ecr-pusher
 
       - name: Login to Amazon ECR
