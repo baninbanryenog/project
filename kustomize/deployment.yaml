@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: was
+  labels: { app: was }
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: was }
+  template:
+    metadata:
+      labels: { app: was }
+    spec:
+      containers:
+        - name: was
+          image: <ACCOUNT_ID>.dkr.ecr.ap-northeast-2.amazonaws.com/oi-backend:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_URL
+              valueFrom: { secretKeyRef: { name: app-secrets, key: DB_URL } }
+            - name: REDIS_URL
+              valueFrom: { secretKeyRef: { name: app-secrets, key: REDIS_URL } }
+            - name: SECRET_KEY
+              valueFrom: { secretKeyRef: { name: app-secrets, key: SECRET_KEY } }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            periodSeconds: 10
+            timeoutSeconds: 2
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            periodSeconds: 20
+            timeoutSeconds: 2
+            initialDelaySeconds: 20
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
