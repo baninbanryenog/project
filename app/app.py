@@ -99,6 +99,8 @@ def _touch_session_and_absolute_timeout():
             session.clear()
             return jsonify(ok=False, code="session_expired",
                            message="세션이 만료되었습니다. 다시 로그인해 주세요."), 401
+@app.get("/health")
+def health(): return "ok", 200
 
 @app.get("/api/healthz")
 def health():
@@ -484,3 +486,4 @@ def subscriptions():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
+
